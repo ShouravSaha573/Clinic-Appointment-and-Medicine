@@ -1,6 +1,8 @@
 import Appointment from "../models/appointment.model.js";
 import Doctor from "../models/doctor.model.js";
 import User from "../models/user.model.js";
+import NotificationService from "../services/notificationService.js";
+
 export const createAppointment = async (req, res) => {
   try {
     const {
@@ -83,6 +85,13 @@ export const createAppointment = async (req, res) => {
     }
 
     // Create admin notification for new appointment
+    try {
+      await NotificationService.createAppointmentNotification(appointment);
+    } catch (notificationError) {
+      console.error("Failed to create notification for appointment:", notificationError);
+      // Don't fail the appointment creation if notification fails
+    }
+
     res.status(201).json({
       message: "Appointment booked successfully",
       appointment,
