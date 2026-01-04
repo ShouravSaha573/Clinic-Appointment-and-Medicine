@@ -1,11 +1,22 @@
 import axios from "axios"
 
+const configuredBaseUrl =
+    typeof import.meta !== "undefined" && import.meta.env?.VITE_API_BASE_URL
+        ? String(import.meta.env.VITE_API_BASE_URL).trim()
+        : "";
+
 const apiHost = typeof window !== "undefined" && window.location?.hostname
     ? window.location.hostname
     : "localhost";
 
+const fallbackBaseUrl = `http://${apiHost}:5000/api`;
+
+const baseURL = configuredBaseUrl
+    ? configuredBaseUrl.replace(/\/+$/, "")
+    : fallbackBaseUrl;
+
 export const axiosInstance = axios.create({
-        baseURL:`http://${apiHost}:5000/api`,
+    baseURL,
     withCredentials:true,
     // Prevent infinite pending requests (e.g. large uploads / stalled network)
     timeout: 30000,

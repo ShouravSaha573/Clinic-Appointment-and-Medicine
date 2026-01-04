@@ -23,6 +23,8 @@ import {connectDB} from "./lib/db.js"
 
 dotenv.config();
 const app = express();
+// Render/Proxies: required for correct secure cookie behavior behind a reverse proxy
+app.set("trust proxy", 1);
 app.use(cookieParser())
 // Increase payload limit to support base64 image uploads (e.g. profile picture)
 app.use(express.json({ limit: "25mb" }))
@@ -46,6 +48,16 @@ const isDevAllowedOrigin = (origin) => {
     if (!origin) return true; // allow non-browser clients (e.g. curl/postman)
     // In development, allow all origins to avoid CORS headaches
     if (process.env.NODE_ENV !== "production") return true;
+
+    const allowListRaw = String(process.env.CORS_ORIGINS || "").trim();
+    if (allowListRaw) {
+        const allowList = allowListRaw
+            .split(",")
+            .map((s) => s.trim())
+            .filter(Boolean);
+        return allowList.includes(origin);
+    }
+
     // Opt-in escape hatch for any environment.
     if (String(process.env.CORS_ALLOW_ALL_ORIGINS || "").toLowerCase() === "true") return true;
     try {
@@ -82,6 +94,10 @@ app.use("/api/reviews",reviewRouter)
 app.use("/api/articles",articleRouter)
 app.use("/api/notifications",notificationRouter)
 app.use("/api/external", externalRouter)
+
+app.get("/api/health", (req, res) => {
+    res.status(200).json({ ok: true });
+});
 
 process.on("unhandledRejection", (reason) => {
     console.error("Unhandled promise rejection:", reason);

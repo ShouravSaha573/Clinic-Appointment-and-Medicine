@@ -12,9 +12,15 @@ export const genToken = (userId, res, options = {}) => {
         expiresIn: "7d",
     });
 
+    const isProd = String(process.env.NODE_ENV || "").toLowerCase() === "production";
+    const sameSite = options.sameSite ?? (isProd ? "none" : "lax");
+    const secure = options.secure ?? isProd;
+
     res.cookie(cookieName, token, {
         maxAge: 7 * 24 * 60 * 60 * 1000,
         httpOnly: true,
+        sameSite,
+        secure,
     });
 
     return token;
